@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  </head>
+  <body>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+    <script type="text/javascript">
+      const video = document.createElement("video");
+      const webcamContainer = document.getElementById("webcam-container");
+      webcamContainer.append(video);
+
+      async function setupCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480 },
+          audio: false,
+        });
+        video.srcObject = stream;
+        return new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            resolve(video);
+          };
+        });
+      }
+
+      async function detectFaces() {
+        const detections = await faceapi
+          .detectAllFaces(video)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
+        console.log(detections);
+      }
+
+      async function main() {
+        await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+        await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+
+        await setupCamera();
+        video.play();
+
+        setInterval(() => {
+          detectFaces();
+        }, 100);
+      }
+
+      main();
+    </script>
+  </body>
+</html>
